@@ -1,0 +1,55 @@
+(bittorrent recommended piece)
+**  (Torrent Piece Size) http://wiki.vuze.com/w/Torrent_Piece_Size
+*** (RecommendedPieceSize() and Optimum Piece Length) http://monotorrent.fr.yuku.com/topic/367/RecommendedPieceSize-and-Optimum-Piece-Length#.U-E7gS397IU
+Torrent File/Directory Size: 65 MB
+2103 x 32 KB - RecommendedPieceSize()
+526 x 128 KB - uTorrent Auto Detect
+
+Torrent File/Directory Size: 164 MB
+2638 x 64 KB - RecommendedPieceSize()
+660 x 256 KB - uTorrent Auto Detect
+
+Torrent File/Directory Size: 357 MB
+2859 x 128 KB - RecommendedPieceSize()
+715 x 512 KB - uTorrent Auto Detect
+
+Torrent File/Directory Size: 1.3 GB
+2737 x 512 KB - RecommendedPieceSize()
+685 x 2048 KB - uTorrent Auto Detect
+    (BItTorrent PIECE size) http://superuser.com/questions/294040/bittorrent-piece-size
+*   (Calculate (sha1) "pieces" when creating torrent file) http://forum.utorrent.com/topic/77321-calculate-sha1-pieces-when-creating-torrent-file/
+1> the pieces value isn't necessarily the last entry in the torrent, use a bencode library for your programming language instead.
+ 2> it's the sha1 hash, in raw 20-byte format per piece.
+ 3> "piece length" of 128,000 isn't a good number. The correct number should be a multiple of 16,384 (the request block size, which should be 131072 for 128k).
+ 4> "Do I use fopen(), grab a piece of the file that is "piece length" and create a sha1 hash for each piece until I reach the end of the file?" Yes. And do NOT pad the final piece.
+**  (Extract the SHA1 hash from a torrent file) http://stackoverflow.com/questions/2572521/extract-the-sha1-hash-from-a-torrent-file
+*   (Studying the average download times with respect to different piece selection algorithms in a BitTorrent-like P2P Network) http://www.cs.rit.edu/~kxa8939/4005-730-01/report.pdf
+Data Analysis
+Parameters used in this simulation:
+Number of peers     30
+Neighborhood size   10
+Number of chunks    100
+Piece size          10
+Seed Upload rate    300
+Peer download rate  250
+Peer upload rate    200
+Peer download slots 10
+Peer upload slots   10
+Number of trials    30
+Master seed         123456
+
+(mpetazzoni/ttorrent * Turn's) https://github.com/mpetazzoni/ttorrent >> "ttorrent-master.zip"
+                               https://mail.yandex.ua/neo2/#message/2370000004755038987
+(IPv4 Address) http://uk.wikipedia.org/wiki/IPv4
+               https://ru.wikipedia.org/wiki/IPv4
+
+(cmdlineparser java example)
+**  (How to parse command line arguments in Java) http://martin-thoma.com/how-to-parse-command-line-arguments-in-java/
+**  (Code Examples of CmdLineParser) http://massapi.com/class/cm/CmdLineParser.html
+(commons cli example)
+    (Работа с commons-cli 1.2) http://habrahabr.ru/post/123360/
+	(Command-line Parsing with Apache Commons CLI) http://www.javaworld.com/article/2072482/command-line-parsing-with-apache-commons-cli.html
+*** (ashlux/Args4j-and-Commons-CLI-examples) https://github.com/ashlux/Args4j-and-Commons-CLI-examples
+
+
+ 

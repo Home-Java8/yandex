@@ -1,0 +1,14 @@
+package com.dataformat.api.bencode;
+
+import java.nio.charset.Charset;
+
+public class BEncodeFormat {
+    static final byte INTEGER_PREFIX = 'i';
+    static final byte LIST_PREFIX = 'l';
+    static final byte DICTIONARY_PREFIX = 'd';
+    static final byte END_SUFFIX = 'e';
+    static final byte STRING_SEPARATOR = ':';
+
+    static final Charset UTF_8 = Charset.forName("UTF-8");
+    static final Charset LATIN_1 = Charset.forName("ISO-8859-1");
+}

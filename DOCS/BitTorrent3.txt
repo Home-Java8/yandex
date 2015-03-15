@@ -1,0 +1,128 @@
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+Не секрет что формат-Bencode (http://ru.wikipedia.org/wiki/Bencode) используется в p2p (Peer-to-peer - пиринговая/одноранговая сеть) системой распространения файлов по протоколу "BitTorrent" для хранения и передачи свободно структурированных данных (файлообменные P2P сети).
+ 
+В этой задаче применяется не совсем обычный способ сериализации (java.io.Serializable) в JAVA.
+И еще сложнее, как мне кажется, выполнения обратного механизма десериализация.
+ 
+В одноранговой сети все клиенты равноправны и обычно не нуждаются в клиент-серверной схеме, но в нашем случе схема будет иметь и сервер и клиентов.
+Считаю, ключевой особенностью протокола-BitTorrent является скорость передачи данных - она выше в несколько раз благодаря механизму паралельной передачи кусков/сегментов данных для целого объекта (например: файла).
+Независимо какие данные будут на входе - в итоге их можно подать как последовательность символов (строку), а на выходе формат-Bencode сериализует эти строковые данные в специальную структуру.
+(к примеру: это могут быть или двоичные данные от сериализации объекта, или файл, или поток данных...)
+В нашем случае, если это будет большой файл - его нужно разбить на несколько сегментов (чтобы иметь возможность паралельно выполнять множественную передачу данных).
+Причем, разные сегменты данных-файла можно одновременно-параллельно передавать от нескольких клиентов (на случай если на одном из клиентов этот кусок данных будет временно недоступен).
+ 
+В моей схеме будет участвовать один клиент для (сериализации) кодирования заголовочного файла в формате b-encode и передачу самих данных непрерывным байтпотоком, а другой клиент для выполнения десериализации приема данных непрерывного байтпотока файлов.
+Для того чтобы моя схема работала - мой клиент будет формировать торрент-файл, в котором будет лежать детальная информация (в моем случае, это: общая информация о файле в текущей раздаче, контрольные суммы сегментов раздаваемых файлов, хеш-суммы файлов целиком, и другое...)
+В идеале, мой торрент файл должен лежать на сервере-трекере (осуществляющий координацию клиентов), но поскольку эта часть уже не является обязательной в задаче, - я просто положу его где-то на общем рессурсе.
+Еще один фактор (в идеале) для хранения и передачи свободно структурированных данных между клиентами по протоколу-BitTorrent мне нужна пиринговая p2p (Peer-to-peer) файлообменная-сеть.
+Все эти компоненты ("p2p", BitTorrent-трекер, "Bencode", ".torrent") являются частью BitTorrent протокола и конечно было бы интересно развернуть такую схему.
+На этот счет существует много решений для развертывания p2p-сети, BitTorrent-трекера, реализация многопоточных операций по обработке обращений, но считаю ключевой целью моей задачи все-таки есть именно реализация механизма сериализации/десериализации в формате-Bencode, поэтому я нестану сейчас делать второстепенные задачи. И просто сэммитирую p2p-сеть, BitTorrent-трекер как заглушку...
+ 
+
+Итак, я определил для себя какие исходные данные по этому заданию я хочу использовать и тот объем задач, который я выполняю по этому заданию:
+1. Пускай у меня есть локальная система и некий общий рессурс (осуществляющий координацию клиентов) где будут лежать торрент-файлы.
+2. В качестве данных я выберу обычный-любой клиентский файл.
+3. Еще у меня будут примитивные клиенты реализованые как сокеты и выделенный порт по которому они смогут обмениваться данными.
+  - Один клиент будет:
+    * разбивать клиентский файл на куски;
+    * формировать (информационный) торрент-файл;
+    * читать клиентский файл и принимать эти данные на вход как строку;
+    * выполнять сериализацию в формате-Bencode и отправлять данные по выделенному порту на сокет другого клиента;
+  - Другой клиент будет:
+    * анализировать (информационный) торрент-файл и определять откуда (источники других клиентов) можно грузить доступные куски клиентского файла;
+    * принимать данные в формате-Bencode по выделенному порту (из сокета первого клиента) и выполнять десериализацию;
+  * проверять целостность полученных данных и в случае ошибки повторять процесс загрузки кусков файла;
+  * складывать отдельные загруженные куски в единный файл;
+  * организовать выполнение загрузки в несколько паралельных потоков;
+4. Оба клиента будут работать синхронно, в режиме обмена сообщениями:
+  - первый клиент будет слушать порт в дежурном режиме, и выполнять команды в активном режиме (на передачу данных) по запросу...;
+  - второй клиент будет отправлять команды на порт для первого клиента и получать ответы (данные: кусков файла и их контрольную-сумму для подтверждения);
+ 
+Эти проект(ы) я разрабатываю с помощью 'maven2'.
+Результатом полного цикла выполнения сериализации/десериализации в формате-Bencode будет:
+1. торрент-файл;
+2. копия клиентского файла;
+3. и минимальное время загрузки файла (по сравнению со стандартным копированием);
+
+
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+Что нужно для работы с форматом "Bencode":
+0. официальный сайт ("Bencode Stream Parsing in Java" - http://www.codecommit.com/blog/java/bencode-stream-parsing-in-java)
+       документация ("Bencode" - http://dic.academic.ru/dic.nsf/ruwiki/1265962)
+       спецификация ("Спецификация протокола BitTorrent v 1.0 в деталях по русски" - http://netnsk.ru/publica/bittorrent/BitTorrent_11.php)
+       wikipedia ("Bencode" - http://ru.wikipedia.org/wiki/Bencode)
+       wikipedia ("Одноранговая сеть" - http://ru.wikipedia.org/wiki/P2p)
+1. здесь нужна определенная структура о строении торрент-файла ("Создание и редактирование torrent файлов" - http://purebasic.mybb.ru/viewtopic.php?id=249)
+2. здесь используется (стандартная) библиотека ("jbencode" - http://jbencode.googlecode.com/files/jbencode.jar)
+* существуют стандартные редакторы для ".torrent" файлов ("TorrentFiles.rar" - http://purebasic.mybb.ru/click.php?http://pure-basic.narod.ru/forum_files/TorrentFiles.rar)
+* есть примеры (MAVEN) JAVA-приложений для просмотра-парсинга содержимого ".torrent" файлов: (@test *** "jackson-dataformat-bencode.zip" - https://github.com/zsoltm/jackson-dataformat-bencode)
+                                                                                             ("bitlet.zip" - https://code.google.com/p/bitlet/source/browse/?r=679079f064149b2c356c6d1d9d15970c8c839d7c)
+* (обычные) примеры JAVA-приложений для демонстрации работы с ".torrent" файлов: (String-Bencode-Bdencode *** "JBencode" - https://code.google.com/p/jbencode/source/browse/?r=9#svn%2Ftrunk%2FJBencode%253Fstate%253Dclosed)
+                                                                                 (.torrent-read *** "nachos-java.tar.gz" - http://bnrg.cs.berkeley.edu/~adj/cs16x/Nachos/)
+                                                                                 (                                       - http://bnrg.cs.berkeley.edu/~adj/cs16x/Nachos/BitTorrent/)
+3. формат "Bencode" использует определеные типы данных, но главное из этого для нас нужно определить форму-принцип кодирования строки в формате "Bencode" (https://wiki.theory.org/BitTorrentSpecification)
+4. формат кодирования "Bencode" позволяет применять разных типов данных (целые, строки, массивы, словари: "DictionaryType", "DictionaryValue")
+(5. формат "Bencode" должен кодирование и уметь делать обратный разбор .toorent-файла...)
+
+
+
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+(bitletorg/bitlet) http://code.google.com/p/bitlet/
+                   https://github.com/bitletorg/bitlet
+(Torrent Details For "Home Media Server (UPnP, DLNA, HTTP) 1.49.1") http://flashtorrents.org/torrents-details.php?id=20143
+(Решения пользователей программы "Домашний медиа-сервер (UPnP, DLNA, HTTP)") http://www.homemediaserver.ru/forum/viewtopic.php?f=20&t=2096
+===================================================================================================
+C:\Users\Саша>chdir /D d:
+D:\>
+
+cd D:\IdeaProjects\JavaLessons\yandex3\bitlet\target
+
+D:\IdeaProjects\JavaLessons\yandex3\bitlet\target>java -jar wetorrent-1.0-SNAPSHOT.jar
+Error: Could not find or load main class org.wetorrent.upnp.Main
+===================================================================================================
+aleksey@jenkins:~/IdeaProjects/worked/yandex3/bitlet/target$ java -jar wetorrent-1.0-SNAPSHOT.jar 
+Exception in thread "main" java.lang.NoClassDefFoundError: org/wetorrent/upnp/Main
+Caused by: java.lang.ClassNotFoundException: org.wetorrent.upnp.Main
+    at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+    at java.security.AccessController.doPrivileged(Native Method)
+    at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+    at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+    at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:301)
+    at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+Could not find the main class: org.wetorrent.upnp.Main. Program will exit.
+
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+*** (Возвращаемся на раздачу или как сделать невозможное) http://habrahabr.ru/post/150608/
+    (Редактировние .torrent файлов) http://lug.dp.ua/viewtopic.php?id=402
+	
+*** (Использование BitTorrent в Java: jBitTorrent API) http://habrahabr.ru/post/117116/
+*** (Возвращаемся на раздачу или как сделать невозможное) http://habrahabr.ru/post/150608/
+    (Bencode Library) http://bencode.codeplex.com/
+*** (Редактировние .torrent файлов) http://lug.dp.ua/viewtopic.php?id=402
+*** (zsoltm/jackson-dataformat-bencode) https://github.com/zsoltm/jackson-dataformat-bencode
+                                        https://travis-ci.org/zsoltm/jackson-dataformat-bencode
+                                        http://en.wikipedia.org/wiki/Bittorent#mediaviewer/File:BitTorrent_network.svg
+*   (JacksonInFiveMinutes) http://wiki.fasterxml.com/JacksonInFiveMinutes
+*** (Bencode Stream Parsing in Java) http://www.codecommit.com/blog/java/bencode-stream-parsing-in-java
+**  (Правильная запись в текстовой файл) http://javatalks.ru/topics/11892
+**  (Как я могу создать .torrent в Java?) http://answerstop.org/question/375582/how-can-i-generate-a-torrent-in-java
+(java byte to torrent file)
+(How can I generate a .torrent in Java?) http://stackoverflow.com/questions/2032876/how-can-i-generate-a-torrent-in-java
+(SCM Repositories - bitext) http://bitext.cvs.sourceforge.net/viewvc/bitext/src/jBittorrentAPI/ExampleCreateTorrent.java?view=markup#vc_file
+
+
+
+
+
+
+
+* (Using GitHub on Windows has never been this easy) https://windows.github.com/
+
+
+
+
+
+
+
+
+
